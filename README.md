@@ -45,9 +45,9 @@ The most common use case is to automatically generate embeddings for your notes 
 name: Build Embeddings
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:     # Manual trigger
 
 jobs:
   build:
@@ -63,7 +63,9 @@ jobs:
 
 2. Create a personal access token with repo access and add it as `EMBEDDINGS_TOKEN` in your repository secrets.
 
-3. Commit and push this workflow file. Embeddings will be generated automatically on every push to main.
+3. Commit and push this workflow file. Embeddings will be generated:
+   - Daily at midnight UTC (via schedule)
+   - Manually via the Actions tab (click "Run workflow")
 
 #### Configuration Options
 
