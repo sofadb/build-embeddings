@@ -35,8 +35,8 @@ Pull and run the latest image from GitHub Container Registry:
 
 ```bash
 docker run --rm \
-  -v /path/to/your/docs:/docs \
-  -v /path/to/your/embeddings:/embeddings \
+  -v ./examples/docs:/docs \
+  -v ./examples/embeddings:/embeddings \
   ghcr.io/sofadb/build-embeddings:latest
 ```
 
@@ -46,8 +46,8 @@ If you have a NVIDIA GPU:
 
 ```bash
 docker run --rm --gpus all \
-  -v /path/to/your/docs:/docs \
-  -v /path/to/your/embeddings:/embeddings \
+  -v ./examples/docs:/docs \
+  -v ./examples/embeddings:/embeddings \
   ghcr.io/sofadb/build-embeddings:latest
 ```
 
@@ -63,8 +63,8 @@ Then run with:
 
 ```bash
 docker run --rm \
-  -v /path/to/your/docs:/docs \
-  -v /path/to/your/embeddings:/embeddings \
+  -v ./examples/docs:/docs \
+  -v ./examples/embeddings:/embeddings \
   build-embeddings
 ```
 
