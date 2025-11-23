@@ -1,0 +1,100 @@
+name: Build Embeddings (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      notes_repo:
+        description: 'Notes repository to process (e.g., user/brain)'
+        required: true
+        type: string
+      notes_path:
+        description: 'Path to notes files within the repo'
+        required: false
+        type: string
+        default: '/'
+      embeddings_path:
+        description: 'Path where embeddings should be output'
+        required: false
+        type: string
+        default: '/embeddings'
+      image_tag:
+        description: 'Docker image tag to use'
+        required: false
+        type: string
+        default: 'latest'
+      commit_email:
+        description: 'Email for git commits'
+        required: false
+        type: string
+        default: 'action@github.com'
+      commit_user:
+        description: 'Name for git commits'
+        required: false
+        type: string
+        default: 'GitHub Action - Embeddings Builder'
+    secrets:
+      notes_token:
+        description: 'Token to access the notes repo'
+        required: true
+
+jobs:
+  build-embeddings:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout notes repo
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.notes_repo }}
+        token: ${{ secrets.notes_token }}
+        path: notes
+    
+    - name: Checkout embeddings tool repo
+      uses: actions/checkout@v4
+      with:
+        repository: sofadb/build-embeddings
+        token: ${{ github.token }}
+        path: embeddings-tool
+    
+    - name: Verify directory structure
+      run: |
+        echo "=== DEBUG: Workspace contents ==="
+        ls -la ${{ github.workspace }}
+        
+        echo "=== DEBUG: Notes repo contents ==="
+        ls -la notes/
+        
+        echo "=== DEBUG: Embeddings tool repo contents ==="
+        ls -la embeddings-tool/
+        
+        echo "=== DEBUG: Notes path configuration ==="
+        echo "notes_path input: '${{ inputs.notes_path }}'"
+        
+        if [ "${{ inputs.notes_path }}" = "/" ]; then
+          echo "=== DEBUG: Processing from root directory ==="
+          find notes/ -name "*.md" -type f 2>/dev/null || echo "No .md files found"
+        else
+          echo "=== DEBUG: Processing from subdirectory: notes${{ inputs.notes_path }} ==="
+          find notes${{ inputs.notes_path }}/ -name "*.md" -type f 2>/dev/null || echo "No .md files found in ${{ inputs.notes_path }}"
+        fi
+    
+    - name: Build embeddings
+      run: |
+        docker run --rm \
+          -v ${{ github.workspace }}/notes:/data \
+          ghcr.io/sofadb/build-embeddings:${{ inputs.image_tag }}
+    
+    - name: Commit and push embeddings
+      run: |
+        cd notes
+        git config --local user.email "${{ inputs.commit_email }}"
+        git config --local user.name "${{ inputs.commit_user }}"
+        git add .
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "🔢 Update embeddings - $(date '+%Y-%m-%d %H:%M:%S')"
+          git push
+        fi

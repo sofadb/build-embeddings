@@ -29,6 +29,47 @@ For each markdown file, a corresponding JSON file is created in `/embeddings` wi
 
 ## Quick Start
 
+### Using as a Reusable GitHub Actions Workflow
+
+The most common use case is to automatically generate embeddings for your notes repository using GitHub Actions. This workflow will:
+- Clone your notes repository
+- Generate embeddings for all markdown files
+- Commit the embeddings back to your repository
+
+#### Setup
+
+1. In your notes repository (e.g., `user/brain`), create `.github/workflows/build-embeddings.yml`:
+
+```yaml
+name: Build Embeddings
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: sofadb/build-embeddings/.github/workflows/build-embeddings-reusable.yml@main
+    with:
+      notes_repo: 'user/brain'  # Your repository
+      notes_path: '/'           # Where your markdown files are
+      image_tag: 'latest'       # Docker image version
+    secrets:
+      notes_token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+2. Commit and push this workflow file. Embeddings will be generated automatically on every push to main.
+
+#### Configuration Options
+
+- `notes_repo` (required): Your repository in format `owner/repo`
+- `notes_path` (optional): Path to markdown files, defaults to `/`
+- `embeddings_path` (optional): Output path for embeddings, defaults to `/embeddings`
+- `image_tag` (optional): Docker image version, defaults to `latest`
+- `commit_email` (optional): Git commit email
+- `commit_user` (optional): Git commit user name
+
 ### Using Pre-built Image from GHCR
 
 Pull and run the latest image from GitHub Container Registry:
