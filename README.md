@@ -15,7 +15,7 @@ This tool processes markdown files in a `/docs` directory and generates correspo
 
 ### Output Format
 
-For each markdown file (e.g., `/docs/journal/2024/12/11/11223344.md`), a JSON file is created at `/embeddings/journal/2024/12/11/11223344.json` with the following structure:
+For each markdown file, a corresponding JSON file is created in `/embeddings` with the same relative path structure:
 
 ```json
 {
@@ -66,26 +66,6 @@ docker run --rm \
   -v /path/to/your/docs:/docs \
   -v /path/to/your/embeddings:/embeddings \
   build-embeddings
-```
-
-## Directory Structure
-
-The tool expects the following structure:
-
-```
-/docs/
-  └── journal/
-      └── 2024/
-          └── 12/
-              └── 11/
-                  └── 11223344.md
-
-/embeddings/
-  └── journal/
-      └── 2024/
-          └── 12/
-              └── 11/
-                  └── 11223344.json
 ```
 
 ## How It Works
