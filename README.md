@@ -51,6 +51,8 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     uses: sofadb/build-embeddings/.github/workflows/build-embeddings-reusable.yml@main
     with:
       embeddings_repo: 'user/brain-embeddings'  # Your embeddings repository
