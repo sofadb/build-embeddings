@@ -88,6 +88,12 @@ jobs:
         echo "Embeddings path: ${{ github.workspace }}/work/embeddings"
         echo "Image: ghcr.io/sofadb/build-embeddings:${{ inputs.image_tag }}"
         
+        echo "=== DEBUG: Notes directory contents (will be mounted as /docs) ==="
+        ls -laR ${{ github.workspace }}/notes/
+        
+        echo "=== DEBUG: Embeddings directory before processing ==="
+        ls -la ${{ github.workspace }}/work/embeddings/
+        
         docker run --rm \
           -v ${{ github.workspace }}/notes:/docs \
           -v ${{ github.workspace }}/work/embeddings:/embeddings \
