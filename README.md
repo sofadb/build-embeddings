@@ -29,21 +29,15 @@ For each markdown file (e.g., `/docs/journal/2024/12/11/11223344.md`), a JSON fi
 
 ## Quick Start
 
-### Build the Docker Image
+### Using Pre-built Image from GHCR
 
-```bash
-docker build -t build-embeddings .
-```
-
-### Run the Container
-
-Mount your docs and embeddings directories:
+Pull and run the latest image from GitHub Container Registry:
 
 ```bash
 docker run --rm \
   -v /path/to/your/docs:/docs \
   -v /path/to/your/embeddings:/embeddings \
-  build-embeddings
+  ghcr.io/sofadb/build-embeddings:latest
 ```
 
 ### With GPU Support
@@ -52,6 +46,23 @@ If you have a NVIDIA GPU:
 
 ```bash
 docker run --rm --gpus all \
+  -v /path/to/your/docs:/docs \
+  -v /path/to/your/embeddings:/embeddings \
+  ghcr.io/sofadb/build-embeddings:latest
+```
+
+### Build the Docker Image Locally
+
+If you prefer to build locally:
+
+```bash
+docker build -t build-embeddings .
+```
+
+Then run with:
+
+```bash
+docker run --rm \
   -v /path/to/your/docs:/docs \
   -v /path/to/your/embeddings:/embeddings \
   build-embeddings
