@@ -75,35 +75,37 @@ jobs:
         echo "=== DEBUG: Embeddings repo contents ==="
         ls -la embeddings/
         
-        echo "=== DEBUG: Setting up directories ==="
-        mkdir -p notes/docs
-        mkdir -p notes/embeddings
-        
-        # Copy notes to docs directory for processing
-        if [ "${{ inputs.notes_path }}" = "/" ]; then
-          cp -r notes/* notes/docs/ 2>/dev/null || true
-        else
-          cp -r notes${{ inputs.notes_path }}/* notes/docs/ 2>/dev/null || true
-        fi
+        echo "=== DEBUG: Setting up embeddings directory ==="
+        mkdir -p work/embeddings
         
         echo "=== DEBUG: Markdown files to process ==="
-        find notes/docs/ -name "*.md" -type f 2>/dev/null || echo "No .md files found"
+        find notes/ -name "*.md" -type f 2>/dev/null || echo "No .md files found"
     
     - name: Build embeddings
       run: |
+        echo "=== DEBUG: Running Docker container ==="
+        echo "Notes path: ${{ github.workspace }}/notes"
+        echo "Embeddings path: ${{ github.workspace }}/work/embeddings"
+        echo "Image: ghcr.io/sofadb/build-embeddings:${{ inputs.image_tag }}"
+        
         docker run --rm \
-          -v ${{ github.workspace }}/notes:/data \
+          -v ${{ github.workspace }}/notes:/docs \
+          -v ${{ github.workspace }}/work/embeddings:/embeddings \
           ghcr.io/sofadb/build-embeddings:${{ inputs.image_tag }}
+        
+        echo "=== DEBUG: Docker container finished ==="
+        echo "Generated embeddings:"
+        ls -laR work/embeddings/ 2>/dev/null || echo "No embeddings files found"
     
     - name: Copy embeddings to embeddings repo
       run: |
         echo "=== DEBUG: Copying embeddings ==="
         
         if [ "${{ inputs.embeddings_path }}" = "/" ]; then
-          cp -r notes/embeddings/* embeddings/ 2>/dev/null || echo "No embeddings generated"
+          cp -r work/embeddings/* embeddings/ 2>/dev/null || echo "No embeddings generated"
         else
           mkdir -p embeddings${{ inputs.embeddings_path }}
-          cp -r notes/embeddings/* embeddings${{ inputs.embeddings_path }}/ 2>/dev/null || echo "No embeddings generated"
+          cp -r work/embeddings/* embeddings${{ inputs.embeddings_path }}/ 2>/dev/null || echo "No embeddings generated"
         fi
         
         echo "=== DEBUG: Embeddings repo contents after copy ==="
