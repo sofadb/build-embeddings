@@ -33,8 +33,9 @@ For each markdown file, a corresponding JSON file is created in `/embeddings` wi
 
 The most common use case is to automatically generate embeddings for your notes repository using GitHub Actions. This workflow will:
 - Clone your notes repository
+- Clone your embeddings repository
 - Generate embeddings for all markdown files
-- Commit the embeddings back to your repository
+- Commit the embeddings to the separate embeddings repository
 
 #### Setup
 
@@ -52,23 +53,32 @@ jobs:
   build:
     uses: sofadb/build-embeddings/.github/workflows/build-embeddings-reusable.yml@main
     with:
-      notes_repo: 'user/brain'  # Your repository
-      notes_path: '/'           # Where your markdown files are
-      image_tag: 'latest'       # Docker image version
+      embeddings_repo: 'user/brain-embeddings'  # Your embeddings repository
+      notes_path: '/'                            # Where your markdown files are (optional)
+      embeddings_path: '/'                       # Where to put embeddings (optional)
+      image_tag: 'latest'                        # Docker image version (optional)
     secrets:
-      notes_token: ${{ secrets.GITHUB_TOKEN }}
+      embeddings_token: ${{ secrets.EMBEDDINGS_TOKEN }}
 ```
 
-2. Commit and push this workflow file. Embeddings will be generated automatically on every push to main.
+2. Create a personal access token with repo access and add it as `EMBEDDINGS_TOKEN` in your repository secrets.
+
+3. Commit and push this workflow file. Embeddings will be generated automatically on every push to main.
 
 #### Configuration Options
 
-- `notes_repo` (required): Your repository in format `owner/repo`
-- `notes_path` (optional): Path to markdown files, defaults to `/`
-- `embeddings_path` (optional): Output path for embeddings, defaults to `/embeddings`
-- `image_tag` (optional): Docker image version, defaults to `latest`
-- `commit_email` (optional): Git commit email
-- `commit_user` (optional): Git commit user name
+Required:
+- `embeddings_repo`: Repository to push embeddings to, format `owner/repo`
+
+Optional:
+- `notes_path`: Path to markdown files in notes repo, defaults to `/`
+- `embeddings_path`: Output path in embeddings repo, defaults to `/`
+- `image_tag`: Docker image version, defaults to `latest`
+- `commit_email`: Git commit email, defaults to `action@github.com`
+- `commit_user`: Git commit user name, defaults to `GitHub Action - Embeddings Builder`
+
+Secrets:
+- `embeddings_token`: GitHub token with write access to embeddings repository
 
 ### Using Pre-built Image from GHCR
 

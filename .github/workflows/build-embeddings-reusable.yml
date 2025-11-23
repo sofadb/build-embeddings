@@ -3,8 +3,8 @@ name: Build Embeddings (Reusable)
 on:
   workflow_call:
     inputs:
-      notes_repo:
-        description: 'Notes repository to process (e.g., user/brain)'
+      embeddings_repo:
+        description: 'Embeddings repository to push to (e.g., user/brain-embeddings)'
         required: true
         type: string
       notes_path:
@@ -13,10 +13,10 @@ on:
         type: string
         default: '/'
       embeddings_path:
-        description: 'Path where embeddings should be output'
+        description: 'Path where embeddings should be output in embeddings repo'
         required: false
         type: string
-        default: '/embeddings'
+        default: '/'
       image_tag:
         description: 'Docker image tag to use'
         required: false
@@ -33,8 +33,8 @@ on:
         type: string
         default: 'GitHub Action - Embeddings Builder'
     secrets:
-      notes_token:
-        description: 'Token to access the notes repo'
+      embeddings_token:
+        description: 'Token to access and push to the embeddings repo'
         required: true
 
 jobs:
@@ -47,9 +47,15 @@ jobs:
     - name: Checkout notes repo
       uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.notes_repo }}
-        token: ${{ secrets.notes_token }}
+        token: ${{ github.token }}
         path: notes
+    
+    - name: Checkout embeddings repo
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.embeddings_repo }}
+        token: ${{ secrets.embeddings_token }}
+        path: embeddings
     
     - name: Checkout embeddings tool repo
       uses: actions/checkout@v4
@@ -58,7 +64,7 @@ jobs:
         token: ${{ github.token }}
         path: embeddings-tool
     
-    - name: Verify directory structure
+    - name: Prepare directories
       run: |
         echo "=== DEBUG: Workspace contents ==="
         ls -la ${{ github.workspace }}
@@ -66,19 +72,22 @@ jobs:
         echo "=== DEBUG: Notes repo contents ==="
         ls -la notes/
         
-        echo "=== DEBUG: Embeddings tool repo contents ==="
-        ls -la embeddings-tool/
+        echo "=== DEBUG: Embeddings repo contents ==="
+        ls -la embeddings/
         
-        echo "=== DEBUG: Notes path configuration ==="
-        echo "notes_path input: '${{ inputs.notes_path }}'"
+        echo "=== DEBUG: Setting up directories ==="
+        mkdir -p notes/docs
+        mkdir -p notes/embeddings
         
+        # Copy notes to docs directory for processing
         if [ "${{ inputs.notes_path }}" = "/" ]; then
-          echo "=== DEBUG: Processing from root directory ==="
-          find notes/ -name "*.md" -type f 2>/dev/null || echo "No .md files found"
+          cp -r notes/* notes/docs/ 2>/dev/null || true
         else
-          echo "=== DEBUG: Processing from subdirectory: notes${{ inputs.notes_path }} ==="
-          find notes${{ inputs.notes_path }}/ -name "*.md" -type f 2>/dev/null || echo "No .md files found in ${{ inputs.notes_path }}"
+          cp -r notes${{ inputs.notes_path }}/* notes/docs/ 2>/dev/null || true
         fi
+        
+        echo "=== DEBUG: Markdown files to process ==="
+        find notes/docs/ -name "*.md" -type f 2>/dev/null || echo "No .md files found"
     
     - name: Build embeddings
       run: |
@@ -86,9 +95,23 @@ jobs:
           -v ${{ github.workspace }}/notes:/data \
           ghcr.io/sofadb/build-embeddings:${{ inputs.image_tag }}
     
+    - name: Copy embeddings to embeddings repo
+      run: |
+        echo "=== DEBUG: Copying embeddings ==="
+        
+        if [ "${{ inputs.embeddings_path }}" = "/" ]; then
+          cp -r notes/embeddings/* embeddings/ 2>/dev/null || echo "No embeddings generated"
+        else
+          mkdir -p embeddings${{ inputs.embeddings_path }}
+          cp -r notes/embeddings/* embeddings${{ inputs.embeddings_path }}/ 2>/dev/null || echo "No embeddings generated"
+        fi
+        
+        echo "=== DEBUG: Embeddings repo contents after copy ==="
+        ls -la embeddings/
+    
     - name: Commit and push embeddings
       run: |
-        cd notes
+        cd embeddings
         git config --local user.email "${{ inputs.commit_email }}"
         git config --local user.name "${{ inputs.commit_user }}"
         git add .
